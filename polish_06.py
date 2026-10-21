@@ -52,7 +52,7 @@ change('pet_node.position.y = 0.63 + sin(animation_time * 2.0 + float(i)) * 0.08
 \t\t\tpet_node.rotation.y = lerp_angle(pet_node.rotation.y, atan2(-direction_to_goal.x, -direction_to_goal.z), minf(1.0, delta * 5.0))''')
 # Existing _next_companion failed to sync three follower slots, repair.
 begin=s.index("func _next_companion() -> void:")
-end=s.index("func _make_pet_model(index: int) -> void:",begin)
+end=s.index("\nfunc ", begin + 1) + 1
 s=s[:begin]+'''func _next_companion() -> void:
 \tif pets.is_empty():
 \t\t_show_toast("Fais eclore ton premier oeuf avant d'equiper un compagnon.")
