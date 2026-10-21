@@ -1,0 +1,20 @@
+PETIT NID - VERSION CORRIGEE 0.2.1
+====================================
+
+1) Extrais TOUT le fichier ZIP dans un dossier de ton choix.
+2) Double-clique sur Petit_Nid.exe.
+3) Si rien ne se passe, double-clique sur Lancer_et_Diagnostiquer.bat.
+4) Si le probleme persiste, envoie-nous les lignes d'erreur qui s'affichent
+   dans la fenetre du diagnostic. Le journal est aussi dans le dossier
+   temporaire de Windows, fichier Petit_Nid_Diagnostic.log.
+
+Le jeu est une version d'essai en 3D faite avec Godot.
+Il n'a pas besoin de Godot installe sur ton PC.
+Le moteur est compile sans signature numerique. Windows Defender
+ou SmartScreen peut demander une verification.
+
+IMPORTANT : Cette version corrige le placement de la camera
+avant son orientation et ajoute des tests de demarrage.
+
+AUCUNE image generee par IA n'est incluse. Les visuels du jeu
+restent des formes de test, avant validation de vrais assets humains.
