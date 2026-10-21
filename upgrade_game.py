@@ -45,9 +45,36 @@ change("\tselected_pet = clampi(int(parsed.get(\"selected_pet\", -1)), -1, pets.
 \tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1
 """)
 
+# Progression finissable, sans supprimer le mode collection libre.
+change('\\t\\t"followers": follower_slots,\\n\\t\\t"total_hatched":',
+       '\\t\\t"followers": follower_slots,\\n\\t\\t"victory_unlocked": victory_unlocked,\\n\\t\\t"total_hatched":')
+change('\\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\\n',
+       '\\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\\n\\tvictory_unlocked = bool(parsed.get("victory_unlocked", false))\\n')
+change('\\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)',
+       '\\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)\\n\\t_check_victory()')
+change('\\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)',
+       '\\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)\\n\\t_check_victory()')
+
 # Ajouter fonctions avant le modele d'animaux.
 marker="func _make_pet_model(index: int) -> void:\n"
-extra="""func _toggle_follower(index: int) -> void:
+extra="""func _check_victory() -> void:
+\tif victory_unlocked or unlocked_zone < zones.size() - 1 or total_hatched < 20:
+\t\treturn
+\tvar found_mythic: bool = false
+\tfor item in pets:
+\t\tif int(item["kind"]) == 3:
+\t\t\tfound_mythic = true
+\t\t\tbreak
+\tif not found_mythic:
+\t\treturn
+\tvictory_unlocked = true
+\tcoins += 500
+\t_save_progress()
+\tvar layer = get_node_or_null("Interface de jeu")
+\tif layer != null:
+\t\tlayer._show_menu("victory")
+
+func _toggle_follower(index: int) -> void:
 \tif index < 0 or index >= pets.size():
 \t\treturn
 \tif follower_slots.has(index):
