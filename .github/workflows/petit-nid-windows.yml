@@ -1,4 +1,4 @@
-name: Petit Nid - Windows EXE - Jouable 0.3
+name: Petit Nid - Windows EXE - Jeu 0.4
 
 on:
   push:
@@ -13,6 +13,7 @@ on:
       - 'upgrade_game.py'
       - 'scripts/game_ui.gd'
       - 'tests/gameplay_test.gd'
+      - 'import_human_art.py'
   workflow_dispatch:
   pull_request:
     branches:
@@ -38,6 +39,9 @@ jobs:
           mkdir -p game/scripts game/tests
           cp scripts/game_ui.gd game/scripts/game_ui.gd
           python3 upgrade_game.py
+          curl -fL --retry 3 --retry-delay 2 -o /tmp/kenney_nature-kit.zip "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip"
+          python3 import_human_art.py /tmp/kenney_nature-kit.zip
+          test -s game/data/human_art.json
           cp tests/gameplay_test.gd game/tests/gameplay_test.gd
           test -s game/scripts/world.gd
           test -s game/data/balance.json
@@ -106,6 +110,7 @@ jobs:
           sha256sum build/Petit_Nid.exe > build/Petit_Nid.exe.sha256
           cp ../Lancer_et_Diagnostiquer.bat build/Lancer_et_Diagnostiquer.bat
           cp ../LIRE_AVANT.txt build/LIRE_AVANT.txt
+          cp CREDITS_ART_HUMAIN.txt build/CREDITS_ART_HUMAIN.txt
       - name: Publier le jeu Windows
         uses: actions/upload-artifact@v4
         with:
@@ -115,6 +120,7 @@ jobs:
             game/build/Petit_Nid.exe.sha256
             game/build/Lancer_et_Diagnostiquer.bat
             game/build/LIRE_AVANT.txt
+            game/build/CREDITS_ART_HUMAIN.txt
           if-no-files-found: error
           retention-days: 30
 
