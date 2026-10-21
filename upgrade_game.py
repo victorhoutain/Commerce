@@ -14,7 +14,7 @@ def change(old, new, count=1):
     assert old in src, f"Impossible de trouver la cible : {old[:90]!r}"
     src = src.replace(old, new, count)
 
-change("var selected_pet = -1\n", "var selected_pet = -1\nvar follower_slots: Array = []\n")
+change("var selected_pet = -1\n", "var selected_pet = -1\nvar follower_slots: Array = []\nvar victory_unlocked: bool = false\n")
 
 change("\t_build_hud()\n\tegg_parent = Node3D.new()",
        "\t_build_hud()\n\t# L'ancien HUD reste present pour fournir les interactions contextuelles.\n\tfor node in get_children():\n\t\tif node is CanvasLayer:\n\t\t\tnode.visible = false\n\tegg_parent = Node3D.new()")
@@ -46,14 +46,14 @@ change("\tselected_pet = clampi(int(parsed.get(\"selected_pet\", -1)), -1, pets.
 """)
 
 # Progression finissable, sans supprimer le mode collection libre.
-change('\\t\\t"followers": follower_slots,\\n\\t\\t"total_hatched":',
-       '\\t\\t"followers": follower_slots,\\n\\t\\t"victory_unlocked": victory_unlocked,\\n\\t\\t"total_hatched":')
-change('\\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\\n',
-       '\\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\\n\\tvictory_unlocked = bool(parsed.get("victory_unlocked", false))\\n')
-change('\\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)',
-       '\\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)\\n\\t_check_victory()')
-change('\\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)',
-       '\\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)\\n\\t_check_victory()')
+change('\t\t"followers": follower_slots,\n\t\t"total_hatched":',
+       '\t\t"followers": follower_slots,\n\t\t"victory_unlocked": victory_unlocked,\n\t\t"total_hatched":')
+change('\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\n',
+       '\tselected_pet = int(follower_slots[0]) if not follower_slots.is_empty() else -1\n\tvictory_unlocked = bool(parsed.get("victory_unlocked", false))\n')
+change('\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)',
+       '\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)\n\t_check_victory()')
+change('\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)',
+       '\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)\n\t_check_victory()')
 
 # Ajouter fonctions avant le modele d'animaux.
 marker="func _make_pet_model(index: int) -> void:\n"
