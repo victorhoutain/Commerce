@@ -8,6 +8,9 @@ on:
       - '.github/workflows/petit-nid-windows.yml'
       - 'petit-nid-source.tar.xz.b64'
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
