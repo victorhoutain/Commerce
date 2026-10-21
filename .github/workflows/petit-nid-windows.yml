@@ -1,4 +1,4 @@
-name: Petit Nid - Windows EXE - Collision test 0.5.1
+name: Petit Nid - Windows EXE - Version 0.6
 
 on:
   push:
@@ -16,6 +16,8 @@ on:
       - 'import_human_art.py'
       - 'physics_upgrade.py'
       - 'tests/physics_test.gd'
+      - 'polish_06.py'
+      - 'tests/polish_06_test.gd'
   workflow_dispatch:
   pull_request:
     branches:
@@ -42,11 +44,13 @@ jobs:
           cp scripts/game_ui.gd game/scripts/game_ui.gd
           python3 upgrade_game.py
           python3 physics_upgrade.py
+          python3 polish_06.py
           curl -fL --retry 3 --retry-delay 2 -o /tmp/kenney_nature-kit.zip "https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip"
           python3 import_human_art.py /tmp/kenney_nature-kit.zip
           test -s game/data/human_art.json
           cp tests/gameplay_test.gd game/tests/gameplay_test.gd
           cp tests/physics_test.gd game/tests/physics_test.gd
+          cp tests/polish_06_test.gd game/tests/polish_06_test.gd
           test -s game/scripts/world.gd
           test -s game/data/balance.json
           test -s game/project.godot
@@ -88,6 +92,8 @@ jobs:
           grep -q 'PETIT NID 0.3 : progression et interface OK' /tmp/petit-nid-test.log
           godot --headless --path . --script res://tests/physics_test.gd 2>&1 | tee -a /tmp/petit-nid-test.log
           grep -q 'PETIT NID 0.5 : collisions, oeufs, eclosion et mouvement OK' /tmp/petit-nid-test.log
+          godot --headless --path . --script res://tests/polish_06_test.gd 2>&1 | tee -a /tmp/petit-nid-test.log
+          grep -q 'PETIT NID 0.6 : animations, interface, collision et manette OK' /tmp/petit-nid-test.log
           if grep -Eq '(SCRIPT ERROR:|^ERROR:)' /tmp/petit-nid-test.log; then
             echo "Erreur Godot detectee"
             exit 1
