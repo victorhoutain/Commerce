@@ -80,7 +80,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq xvfb libgl1-mesa-dri >/dev/null
-          xvfb-run -a godot --path . --quit-after 90 --rendering-driver opengl3 --log-file /tmp/petit-nid-graphique.log 2>&1 | tee /tmp/petit-nid-graphique-stdout.log
+          xvfb-run -a godot --path . --quit-after 90 --audio-driver Dummy --rendering-driver opengl3 --log-file /tmp/petit-nid-graphique.log 2>&1 | tee /tmp/petit-nid-graphique-stdout.log
           if grep -Eq '(SCRIPT ERROR:|^ERROR:)' /tmp/petit-nid-graphique.log /tmp/petit-nid-graphique-stdout.log; then
             echo "Erreur du demarrage graphique Godot"
             exit 1
