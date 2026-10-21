@@ -1,0 +1,79 @@
+name: Petit Nid - Windows EXE
+
+on:
+  push:
+    branches:
+      - petit-nid-windows-build
+    paths:
+      - '.github/workflows/petit-nid-windows.yml'
+      - 'petit-nid-source.tar.xz.b64'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Recuperer Petit Nid
+        uses: actions/checkout@v4
+      - name: Reconstruire le projet et verifier le paquet
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p game
+          base64 --decode petit-nid-source.tar.xz.b64 | tar -xJ -C game
+          test -s game/scripts/world.gd
+          test -s game/data/balance.json
+          test -s game/project.godot
+          echo "Contenu du jeu :"
+          find game -maxdepth 3 -type f | sort
+      - name: Installer Godot 4.5.2 officiel et les modeles Windows
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=4.5.2
+          BASE="https://github.com/godotengine/godot-builds/releases/download/${VERSION}-stable"
+          curl -fL --retry 3 -o /tmp/godot-linux.zip "${BASE}/Godot_v${VERSION}-stable_linux.x86_64.zip"
+          curl -fL --retry 3 -o /tmp/godot-templates.tpz "${BASE}/Godot_v${VERSION}-stable_export_templates.tpz"
+          mkdir -p /tmp/godot
+          unzip -q /tmp/godot-linux.zip -d /tmp/godot
+          GODOT_BIN=$(find /tmp/godot -type f -name 'Godot_v*-stable_linux.x86_64' -print -quit)
+          test -n "$GODOT_BIN"
+          chmod +x "$GODOT_BIN"
+          sudo cp "$GODOT_BIN" /usr/local/bin/godot
+          mkdir -p /tmp/godot-templates
+          unzip -q /tmp/godot-templates.tpz -d /tmp/godot-templates
+          mkdir -p "$HOME/.local/share/godot/export_templates/${VERSION}.stable"
+          cp -a /tmp/godot-templates/templates/. "$HOME/.local/share/godot/export_templates/${VERSION}.stable/"
+          godot --version
+      - name: Tester l'equilibrage
+        working-directory: game
+        run: python3 tests/test_balance.py
+      - name: Importer le projet Godot et verifier les scripts
+        working-directory: game
+        run: godot --headless --path . --editor --import --quit
+      - name: Tester les mecanismes de jeu
+        working-directory: game
+        run: godot --headless --path . --script res://tests/smoke_test.gd
+      - name: Construire Petit_Nid.exe Windows 64 bits
+        working-directory: game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          godot --headless --path . --export-release "Windows Desktop" "build/Petit_Nid.exe"
+          test -s build/Petit_Nid.exe
+          file build/Petit_Nid.exe
+          sha256sum build/Petit_Nid.exe > build/Petit_Nid.exe.sha256
+      - name: Publier le jeu Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: Petit-Nid-Windows-64-bits
+          path: |
+            game/build/Petit_Nid.exe
+            game/build/Petit_Nid.exe.sha256
+          if-no-files-found: error
+          retention-days: 30
