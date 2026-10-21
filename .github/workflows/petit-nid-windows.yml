@@ -86,14 +86,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          godot --headless --path . --script res://tests/smoke_test.gd 2>&1 | tee /tmp/petit-nid-test.log
-          grep -q 'PETIT NID : tests de gameplay OK' /tmp/petit-nid-test.log
-          godot --headless --path . --script res://tests/gameplay_test.gd 2>&1 | tee -a /tmp/petit-nid-test.log
-          grep -q 'PETIT NID 0.3 : progression et interface OK' /tmp/petit-nid-test.log
-          godot --headless --path . --script res://tests/physics_test.gd 2>&1 | tee -a /tmp/petit-nid-test.log
-          grep -q 'PETIT NID 0.5 : collisions, oeufs, eclosion et mouvement OK' /tmp/petit-nid-test.log
-          godot --headless --path . --script res://tests/polish_06_test.gd 2>&1 | tee -a /tmp/petit-nid-test.log
-          grep -q 'PETIT NID 0.6 : animations, interface, collision et manette OK' /tmp/petit-nid-test.log
+          : > /tmp/petit-nid-test.log
+          for specification in             'tests/smoke_test.gd|PETIT NID : tests de gameplay OK'             'tests/gameplay_test.gd|PETIT NID 0.3 : progression et interface OK'             'tests/physics_test.gd|PETIT NID 0.5 : collisions, oeufs, eclosion et mouvement OK'             'tests/polish_06_test.gd|PETIT NID 0.6 : animations, interface, collision et manette OK'; do
+            test_path="${specification%%|*}"
+            success_line="${specification#*|}"
+            echo "--- LANCEMENT $test_path ---" | tee -a /tmp/petit-nid-test.log
+            timeout --signal=TERM 25s godot --headless --path . --script "res://$test_path" 2>&1 | tee -a /tmp/petit-nid-test.log
+            grep -q "$success_line" /tmp/petit-nid-test.log
+            echo "--- TEST VALIDE $test_path ---" | tee -a /tmp/petit-nid-test.log
+          done
           if grep -Eq '(SCRIPT ERROR:|^ERROR:)' /tmp/petit-nid-test.log; then
             echo "Erreur Godot detectee"
             exit 1
