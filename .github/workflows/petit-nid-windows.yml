@@ -28,6 +28,7 @@ jobs:
           set -euo pipefail
           mkdir -p game
           base64 --decode petit-nid-source.tar.xz.b64 | tar -xJ -C game
+          python3 fix_runtime.py
           test -s game/scripts/world.gd
           test -s game/data/balance.json
           test -s game/project.godot
@@ -58,9 +59,29 @@ jobs:
       - name: Importer le projet Godot et verifier les scripts
         working-directory: game
         run: godot --headless --path . --editor --import --quit
-      - name: Tester les mecanismes de jeu
+      - name: Tester les mecanismes et verifier l'absence d'erreurs Godot
         working-directory: game
-        run: godot --headless --path . --script res://tests/smoke_test.gd
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --script res://tests/smoke_test.gd 2>&1 | tee /tmp/petit-nid-test.log
+          grep -q 'PETIT NID : tests de gameplay OK' /tmp/petit-nid-test.log
+          if grep -Eq '(SCRIPT ERROR:|^ERROR:)' /tmp/petit-nid-test.log; then
+            echo "Erreur Godot detectee"
+            exit 1
+          fi
+      - name: Tester l'ouverture avec moteur de rendu
+        working-directory: game
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri >/dev/null
+          xvfb-run -a godot --path . --quit-after 90 --rendering-driver opengl3 --log-file /tmp/petit-nid-graphique.log 2>&1 | tee /tmp/petit-nid-graphique-stdout.log
+          if grep -Eq '(SCRIPT ERROR:|^ERROR:)' /tmp/petit-nid-graphique.log /tmp/petit-nid-graphique-stdout.log; then
+            echo "Erreur du demarrage graphique Godot"
+            exit 1
+          fi
       - name: Construire Petit_Nid.exe Windows 64 bits
         working-directory: game
         shell: bash
@@ -71,6 +92,8 @@ jobs:
           test -s build/Petit_Nid.exe
           file build/Petit_Nid.exe
           sha256sum build/Petit_Nid.exe > build/Petit_Nid.exe.sha256
+          cp ../Lancer_et_Diagnostiquer.bat build/Lancer_et_Diagnostiquer.bat
+          cp ../LIRE_AVANT.txt build/LIRE_AVANT.txt
       - name: Publier le jeu Windows
         uses: actions/upload-artifact@v4
         with:
@@ -78,5 +101,32 @@ jobs:
           path: |
             game/build/Petit_Nid.exe
             game/build/Petit_Nid.exe.sha256
+            game/build/Lancer_et_Diagnostiquer.bat
+            game/build/LIRE_AVANT.txt
           if-no-files-found: error
           retention-days: 30
+
+  tester-exe-windows:
+    needs: build-windows
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - name: Telecharger l'executable genere
+        uses: actions/download-artifact@v4
+        with:
+          name: Petit-Nid-Windows-64-bits
+      - name: Demarrer le vrai programme Windows en mode test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          & ".\Petit_Nid.exe" --headless --quit-after 120 --verbose --log-file "$pwd\godot-test.log" 2>&1 | Out-String | Write-Host
+          $exit = $LASTEXITCODE
+          if (Test-Path "godot-test.log") {
+            $log = Get-Content "godot-test.log" -Raw
+            Write-Host $log
+            if ($log -match '(SCRIPT ERROR:|(?m)^ERROR:)') { throw "Erreur du demarrage sous Windows" }
+          } else {
+            Write-Host "Pas de log Godot, verifier le code retour."
+          }
+          if ($exit -ne 0) { throw "Petit Nid.exe s'est ferme en erreur : $exit" }
+          Write-Host "Petit Nid Windows : test de lancement OK"
