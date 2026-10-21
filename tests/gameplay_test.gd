@@ -57,6 +57,13 @@ func _run() -> void:
 	if game.player.position.x > 0:
 		_fail("impossible de rentrer a la base")
 		return
+	game.unlocked_zone = 3
+	game.total_hatched = 25
+	game.pets.append({"kind": 3, "growth": 0})
+	game._check_victory()
+	if not game.victory_unlocked or ui.menu_mode != "victory":
+		_fail("victoire finale inaccessible")
+		return
 	print("PETIT NID 0.3 : progression et interface OK")
 	paused = false
 	quit(0)
