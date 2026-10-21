@@ -55,9 +55,68 @@ change('\t_show_toast("Bienvenue dans %s !" % str(zone["name"]), 5)',
 change('\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)',
        '\t_show_toast("%d creature(s) nee(s) !  +%d pieces" % [count, gained], 5)\n\t_check_victory()')
 
+# Decors humains Kenney : remplacement des silhouettes de test.
+change('var follower_slots: Array = []\n',
+       'var follower_slots: Array = []\nvar human_trees: Array = []\nvar human_bushes: Array = []\nvar human_rocks: Array = []\n')
+change('\t_load_balance()\n\t_register_controls()',
+       '\t_load_balance()\n\t_load_human_art()\n\t_register_controls()')
+change('func _tree(at: Vector3, seed_value: int) -> void:\n',
+       'func _tree(at: Vector3, seed_value: int) -> void:\n\tif human_trees.size() > 0:\n\t\tvar tree = human_trees[seed_value % human_trees.size()].instantiate()\n\t\ttree.position = at\n\t\ttree.scale = Vector3.ONE * 4.0\n\t\tadd_child(tree)\n\t\treturn\n')
+change('\t_belt_spawn()\n\t_make_world_pretty()',
+       '\t_belt_spawn()\n\t_make_world_pretty()\n\t_place_natural_details()')
+
 # Ajouter fonctions avant le modele d'animaux.
 marker="func _make_pet_model(index: int) -> void:\n"
-extra="""func _check_victory() -> void:
+extra="""func _load_human_art() -> void:
+\tvar file_path = "res://data/human_art.json"
+\tif not FileAccess.file_exists(file_path):
+\t\treturn
+\tvar file = FileAccess.open(file_path, FileAccess.READ)
+\tif file == null:
+\t\treturn
+\tvar art_data = JSON.parse_string(file.get_as_text())
+\tfile.close()
+\tif typeof(art_data) != TYPE_DICTIONARY:
+\t\treturn
+\tfor item in art_data.get("trees", []):
+\t\tvar resource = load(str(item))
+\t\tif resource is PackedScene:
+\t\t\thuman_trees.append(resource)
+\tfor item in art_data.get("bushes", []):
+\t\tvar resource = load(str(item))
+\t\tif resource is PackedScene:
+\t\t\thuman_bushes.append(resource)
+\tfor item in art_data.get("rocks", []):
+\t\tvar resource = load(str(item))
+\t\tif resource is PackedScene:
+\t\t\thuman_rocks.append(resource)
+
+func _place_natural_details() -> void:
+\tfor zone_i in range(zones.size()):
+\t\tvar zone = zones[zone_i]
+\t\tvar left = float(zone["x_min"]) + 5.0
+\t\tvar right = float(zone["x_max"]) - 5.0
+\t\tfor i in range(13):
+\t\t\tvar x = rng.randf_range(left, right)
+\t\t\tvar z = rng.randf_range(-22, 22)
+\t\t\tif absf(z - 2.0) < 3.2:
+\t\t\t\tcontinue
+\t\t\tvar scene: PackedScene = null
+\t\t\tvar factor: float = 2.8
+\t\t\tif i % 3 == 0 and not human_rocks.is_empty():
+\t\t\t\tscene = human_rocks[(i + zone_i) % human_rocks.size()]
+\t\t\t\tfactor = 2.6
+\t\t\telif not human_bushes.is_empty():
+\t\t\t\tscene = human_bushes[(i + zone_i) % human_bushes.size()]
+\t\t\tif scene == null:
+\t\t\t\tcontinue
+\t\t\tvar detail = scene.instantiate()
+\t\t\tdetail.position = Vector3(x, 0, z)
+\t\t\tdetail.scale = Vector3.ONE * factor
+\t\t\tdetail.rotation.y = rng.randf_range(0, TAU)
+\t\t\tadd_child(detail)
+
+func _check_victory() -> void:
 \tif victory_unlocked or unlocked_zone < zones.size() - 1 or total_hatched < 20:
 \t\treturn
 \tvar found_mythic: bool = false
