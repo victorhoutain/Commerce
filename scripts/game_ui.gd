@@ -218,6 +218,7 @@ func _show_menu(mode: String) -> void:
 			var row2 = _buttons_row()
 			row2.add_child(_button("RETOUR AU NID", func(): _home(), Color("#FAD3BD")))
 			row2.add_child(_button("QUITTER LE JEU", func(): _quit(), Color("#E8E9F0")))
+			row2.add_child(_button("NOUVELLE PARTIE", func(): _show_menu("reset"), Color("#F5CDD0")))
 		"help":
 			_heading("COMMENT JOUER ?", "Les cinq etapes de ton aventure.")
 			for entry in [
@@ -265,6 +266,13 @@ func _show_menu(mode: String) -> void:
 				if game.pets.size() > 60:
 					dialogue_body.add_child(_label("Les 60 premieres creatures sont affichees.", 17))
 			dialogue_body.add_child(_button("RETOUR AU JEU", func(): _play(), Color("#F9E6AF")))
+		"victory":
+			_heading("BRAVO ! TU AS REUSSI", "Le royaume des etoiles est a toi !")
+			dialogue_body.add_child(_label("Tu as traverse les quatre mondes, fait eclore vingt oeufs et decouvert une creature mythique.", 22))
+			dialogue_body.add_child(_label("CADEAU : 500 pieces ! L'aventure continue : adopte encore plus de compagnons.", 19, Color("#A56680")))
+			var victory_row = _buttons_row()
+			victory_row.add_child(_button("CONTINUER A JOUER", func(): _play(), Color("#BFEACF")))
+			victory_row.add_child(_button("MA COLLECTION", func(): _show_menu("pets"), Color("#DDD2FF")))
 		"reset":
 			_heading("RECOMMENCER ?", "Cette action efface toute ta progression.")
 			dialogue_body.add_child(_label("Tes creatures, tes pieces et tes zones seront perdues.", 22))
