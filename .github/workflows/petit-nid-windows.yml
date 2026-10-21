@@ -148,3 +148,34 @@ jobs:
           }
           if ($exit -ne 0) { throw "Petit Nid.exe s'est ferme en erreur : $exit" }
           Write-Host "Petit Nid Windows : test de lancement OK"
+      - name: Verifier qu'une vraie fenetre s'ouvre sous Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = Join-Path $pwd "Petit_Nid.exe"
+          $log = Join-Path $pwd "godot-window.log"
+          $process = Start-Process -FilePath $exe -ArgumentList @("--rendering-driver","opengl3","--audio-driver","Dummy","--log-file",$log) -PassThru
+          $visible = $false
+          for ($n = 0; $n -lt 40; $n++) {
+            Start-Sleep -Milliseconds 500
+            $process.Refresh()
+            if ($process.MainWindowHandle -ne 0) {
+              $visible = $true
+              Write-Host "Fenetre creee. HWND: $($process.MainWindowHandle)"
+              break
+            }
+            if ($process.HasExited) {
+              Write-Host "Programme ferme avant affichage."
+              break
+            }
+          }
+          if (-not $process.HasExited) {
+            Stop-Process -Id $process.Id -Force
+          }
+          if (Test-Path $log) {
+            Get-Content $log | Select-Object -Last 30 | ForEach-Object { Write-Host $_ }
+          }
+          if (-not $visible) {
+            throw "La fenetre du jeu ne s'est pas ouverte sur le Windows du test."
+          }
+
